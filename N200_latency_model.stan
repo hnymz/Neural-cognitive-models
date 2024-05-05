@@ -15,18 +15,18 @@ functions {
    real ratcliff_lpdf(real Y, real boundary,
                               real ndt, real bias, real drift, real sddrift) {
     real X;
-    X = (fabs(Y) - ndt); // Remove non-decision time
+    X = (abs(Y) - ndt); // Remove non-decision time
     if (Y >= 0) {
-    return wiener_lpdf( fabs(Y) | boundary, ndt, bias, drift )  + (  ( (boundary*(1-bias)*sddrift)^2 + 2*drift*boundary*(1-bias) - (drift^2)*X ) / (2*(sddrift^2)*X+2)  ) - log(sqrt((sddrift^2)*X+1)) - drift*boundary*(1-bias) + (drift^2)*X*0.5;
+    return wiener_lpdf( abs(Y) | boundary, ndt, bias, drift )  + (  ( (boundary*(1-bias)*sddrift)^2 + 2*drift*boundary*(1-bias) - (drift^2)*X ) / (2*(sddrift^2)*X+2)  ) - log(sqrt((sddrift^2)*X+1)) - drift*boundary*(1-bias) + (drift^2)*X*0.5;
     } else {
-    return wiener_lpdf( fabs(Y) | boundary, ndt, 1-bias, -drift ) + (  ( (boundary*bias*sddrift)^2 - 2*drift*boundary*bias - (drift^2)*X ) / (2*(sddrift^2)*X+2)  ) - log(sqrt((sddrift^2)*X+1)) + drift*boundary*bias + (drift^2)*X*0.5;
+    return wiener_lpdf( abs(Y) | boundary, ndt, 1-bias, -drift ) + (  ( (boundary*bias*sddrift)^2 - 2*drift*boundary*bias - (drift^2)*X ) / (2*(sddrift^2)*X+2)  ) - log(sqrt((sddrift^2)*X+1)) + drift*boundary*bias + (drift^2)*X*0.5;
     }
    }
 }
 data {
     int<lower=1> N_obs;       // Number of trial-level observations
     int<lower=1> N_mis;       // Number of trial-level missing data
-    real y[N_obs + N_mis];    // acc*rt in seconds (negative and positive RTs for incorrect and correct responses respectively)
+    array[N_obs + N_mis] real y;    // acc*rt in seconds (negative and positive RTs for incorrect and correct responses respectively)
     vector<lower=0>[N_obs] n200lat_obs;      // N200 Latency for observed trials
 }
 parameters {
@@ -72,7 +72,7 @@ model {
     for (i in 1:N_obs + N_mis) {
 
         // Log density for DDM process
-        y[i] ~ ratcliff_lpdf(alpha, res + lambda*n200lat[i], .5, delta, eta);
+        y[i] ~ ratcliff(alpha, res + lambda*n200lat[i], .5, delta, eta);
     }
 }
 generated quantities {
