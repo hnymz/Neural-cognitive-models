@@ -1,3 +1,4 @@
+// Adapted from the code in Amin Ghaderi-Kangavari et al. (2022)
 functions {
   /* Model 1
    * Ratcliff diffusion log-PDF for a single response (adapted from brms 1.10.2 and hddm 0.7.8)
