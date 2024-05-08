@@ -8,18 +8,17 @@ functions {
    *   ndt: non-decision time parameter > 0
    *   bias: initial bias parameter in [0, 1]
    *   drift: mean drift rate parameter across trials
-   *   sddrift: standard deviation of drift rates across trials
    * Returns:
    *   a scalar to be added to the log posterior
    */
    real ratcliff_lpdf(real Y, real boundary,
-                              real ndt, real bias, real drift, real sddrift) {
+                              real ndt, real bias, real drift) {
     real X;
     X = (abs(Y) - ndt); // Remove non-decision time
     if (Y >= 0) {
-    return wiener_lpdf( abs(Y) | boundary, ndt, bias, drift )  + (  ( (boundary*(1-bias)*sddrift)^2 + 2*drift*boundary*(1-bias) - (drift^2)*X ) / (2*(sddrift^2)*X+2)  ) - log(sqrt((sddrift^2)*X+1)) - drift*boundary*(1-bias) + (drift^2)*X*0.5;
+    return wiener_lpdf( abs(Y) | boundary, ndt, bias, drift );
     } else {
-    return wiener_lpdf( abs(Y) | boundary, ndt, 1-bias, -drift ) + (  ( (boundary*bias*sddrift)^2 - 2*drift*boundary*bias - (drift^2)*X ) / (2*(sddrift^2)*X+2)  ) - log(sqrt((sddrift^2)*X+1)) + drift*boundary*bias + (drift^2)*X*0.5;
+    return wiener_lpdf( abs(Y) | boundary, ndt, 1-bias, -drift );
     }
    }
 }
@@ -37,7 +36,6 @@ parameters {
     /* main paameter*/
     real<lower=0, upper=6> delta;               // drift rate
     real<lower=0, upper=4> alpha;               // Boundary boundary
-    real<lower=0, upper=3> eta;                 // Trial-to-trial standard deviation of drift rate
     real<lower=0, upper=.4> res;                // residual of Non-decision time
     real<lower=0, upper=.4> n200sub;            // n200 mu parameter
     real<lower=0, upper=3> lambda;              // coefficient paramter
@@ -72,7 +70,7 @@ model {
     for (i in 1:N_obs + N_mis) {
 
         // Log density for DDM process
-        y[i] ~ ratcliff(alpha, res + lambda*n200lat[i], .5, delta, eta);
+        y[i] ~ ratcliff(alpha, res + lambda*n200lat[i], .5, delta);
     }
 }
 generated quantities {
@@ -88,6 +86,6 @@ generated quantities {
    // Wiener likelihood
     for (i in 1:N_obs+N_mis) {
         // Log density for DDM process
-         log_lik[i] = ratcliff_lpdf(y[i] | alpha, res + lambda*n200lat[i], .5, delta, eta) + n200lat_lpdf[i];
+         log_lik[i] = ratcliff_lpdf(y[i] | alpha, res + lambda*n200lat[i], .5, delta) + n200lat_lpdf[i];
    }
 }
