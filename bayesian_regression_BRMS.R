@@ -38,13 +38,13 @@ latency_chain4 <- posterior_draws[[4]]$b_latency
 # Combine the latency samples from all chains into one vector
 combined_latency_samples <- c(latency_chain1, latency_chain2, latency_chain3, latency_chain4)
 
-# Calculate the Savage-Dickey ratio
+# Calculate the Savage-Dickey ratio where the slope parameter equals to 1
 posterior_density <- density(combined_latency_samples, kernel="gaussian")
 posterior_at_1 <- approx(posterior_density$x, posterior_density$y, xout = 1)$y
 prior_at_1 <- dnorm(1, mean = 1, sd = 3)
 bf <- posterior_at_1 / prior_at_1
 
-# Fit the Bayesian linear regression model
+# Fit the logistic regression model
 fit2 <- brm(accuracy ~ latency,
             data = data,
             family = bernoulli(),
