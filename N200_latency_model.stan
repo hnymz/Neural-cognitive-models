@@ -67,7 +67,7 @@ model {
     for (i in 1:N_obs + N_mis) {
 
         // Log density for DDM process
-        y[i] ~ ratcliff(alpha, res + lambda*n200lat[i], .5, delta);
+        target += ratcliff_lpdf(y[i] | alpha, res + lambda*n200lat[i], .5, delta);
     }
 }
 generated quantities {
