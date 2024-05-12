@@ -13,8 +13,6 @@ functions {
    */
    real ratcliff_lpdf(real Y, real boundary,
                               real ndt, real bias, real drift) {
-    real X;
-    X = (abs(Y) - ndt); // Remove non-decision time
     if (Y >= 0) {
     return wiener_lpdf( abs(Y) | boundary, ndt, bias, drift );
     } else {
@@ -29,11 +27,11 @@ data {
     vector<lower=0>[N_obs] n200lat_obs;      // N200 Latency for observed trials
 }
 parameters {
-    vector<lower=0.101, upper=0.248>[N_mis] n200lat_mis;  // vector of missing data for n200 latency
+    vector<lower=0.150, upper=0.350>[N_mis] n200lat_mis;  // vector of missing data for n200 latency
 
     real<lower=0> n200latstd;     // n200lat std
 
-    /* main paameter*/
+    /* main parameter*/
     real<lower=0, upper=6> delta;               // drift rate
     real<lower=0, upper=4> alpha;               // Boundary boundary
     real<lower=0, upper=.4> res;                // residual of Non-decision time
@@ -53,17 +51,16 @@ model {
     res ~ normal(.2, .2) T[0,.4];
     lambda ~ normal(.5, 2) T[0,3];
 
-    n200sub ~ normal(.15,.1) T[0,.4];
+    n200sub ~ normal(.2,.1) T[0,.4];
     alpha ~ normal(1, 2) T[0,4];
-    eta ~ normal(1, 2) T[0,3];
 
     for (i in 1:N_obs) {
         // Note that N200 latencies are censored between 150 and 350 ms for observed data
-        n200lat_obs[i] ~ normal(n200sub, n200latstd) T[.151,.348];
+        n200lat_obs[i] ~ normal(n200sub, n200latstd) T[.150,.350];
     }
     for (i in 1:N_mis) {
         // Note that N200 latencies are censored between 150 and 350 ms for missing data
-        n200lat_mis[i] ~ normal(n200sub, n200latstd) T[.151,.348];
+        n200lat_mis[i] ~ normal(n200sub, n200latstd) T[.150,.350];
     }
 
     // Wiener likelihood
