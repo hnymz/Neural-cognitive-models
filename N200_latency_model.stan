@@ -13,10 +13,11 @@ functions {
    */
    real ratcliff_lpdf(real Y, real boundary,
                               real ndt, real bias, real drift) {
+    real corrected_ndt = fmin(ndt, abs(Y) - 0.001); // Ensure ndt is always less than Y
     if (Y >= 0) {
-    return wiener_lpdf( abs(Y) | boundary, ndt, bias, drift );
+    return wiener_lpdf( abs(Y) | boundary, corrected_ndt, bias, drift );
     } else {
-    return wiener_lpdf( abs(Y) | boundary, ndt, 1-bias, -drift );
+    return wiener_lpdf( abs(Y) | boundary, corrected_ndt, 1-bias, -drift );
     }
    }
 }
@@ -29,45 +30,45 @@ data {
 parameters {
     vector<lower=0.150, upper=0.350>[N_mis] n200lat_mis;  // vector of missing data for n200 latency
 
-    real<lower=0> n200latstd;     // n200lat std
+    real<lower=0.001> n200latstd;     // n200lat std
 
     /* main parameter*/
-    real<lower=0, upper=6> delta;               // drift rate
-    real<lower=0, upper=4> alpha;               // Boundary boundary
-    real<lower=0, upper=.4> res;                // residual of Non-decision time
-    real<lower=0, upper=.4> n200sub;            // n200 mu parameter
-    real<lower=0, upper=3> lambda;              // coefficient paramter
+    real<lower=0.001, upper=6> delta;               // drift rate
+    real<lower=0.001, upper=4> alpha;               // Boundary boundary
+    real<lower=0.001, upper=0.4> res;                // residual of Non-decision time
+    real<lower=0.001, upper=0.4> n200sub;            // n200 mu parameter
+    real<lower=0.001, upper=3> lambda;              // coefficient parameter
 }
 transformed parameters {
    vector[N_obs + N_mis] n200lat = append_row(n200lat_obs, n200lat_mis);
 }
 model {
 
-    n200latstd ~ gamma(.1,.1);
+    n200latstd ~ gamma(0.1, 0.1);
 
     /* main paameter*/
-    delta ~ normal(2, 4) T[0,6];
+    delta ~ normal(2, 4) T[0.001, 6];
 
-    res ~ normal(.2, .2) T[0,.4];
-    lambda ~ normal(.5, 2) T[0,3];
+    res ~ normal(0.2, 0.2) T[0.001, 0.4];          // parameters for Non-decision time
+    lambda ~ normal(0.5, 2) T[0.001, 3];
 
-    n200sub ~ normal(.2,.1) T[0,.4];
-    alpha ~ normal(1, 2) T[0,4];
+    n200sub ~ normal(0.15, 0.1) T[0.001, 0.4];
+    alpha ~ normal(1, 2) T[0.001, 4];
 
     for (i in 1:N_obs) {
         // Note that N200 latencies are censored between 150 and 350 ms for observed data
-        n200lat_obs[i] ~ normal(n200sub, n200latstd) T[.150,.350];
+        n200lat_obs[i] ~ normal(n200sub, n200latstd) T[0.150, 0.350];
     }
     for (i in 1:N_mis) {
         // Note that N200 latencies are censored between 150 and 350 ms for missing data
-        n200lat_mis[i] ~ normal(n200sub, n200latstd) T[.150,.350];
+        n200lat_mis[i] ~ normal(n200sub, n200latstd) T[0.150, 0.350];
     }
 
     // Wiener likelihood
     for (i in 1:N_obs + N_mis) {
 
         // Log density for DDM process
-        target += ratcliff_lpdf(y[i] | alpha, res + lambda*n200lat[i], .5, delta);
+        target += ratcliff_lpdf(y[i] | alpha, res + lambda*n200lat[i], 0.5, delta);
     }
 }
 generated quantities {
@@ -83,6 +84,6 @@ generated quantities {
    // Wiener likelihood
     for (i in 1:N_obs+N_mis) {
         // Log density for DDM process
-         log_lik[i] = ratcliff_lpdf(y[i] | alpha, res + lambda*n200lat[i], .5, delta) + n200lat_lpdf[i];
+         log_lik[i] = ratcliff_lpdf(y[i] | alpha, res + lambda*n200lat[i], 0.5, delta) + n200lat_lpdf[i];
    }
 }
