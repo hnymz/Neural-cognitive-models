@@ -13,11 +13,11 @@ functions {
    */
    real ratcliff_lpdf(real Y, real boundary,
                               real ndt, real bias, real drift) {
-    real corrected_ndt = fmin(ndt, abs(Y) - 0.001); // Ensure ndt is always less than Y
+    // real corrected_ndt = fmin(ndt, abs(Y) - 0.001); // Ensure ndt is always less than Y
     if (Y >= 0) {
-    return wiener_lpdf( abs(Y) | boundary, corrected_ndt, bias, drift );
+    return wiener_lpdf( abs(Y) | boundary, ndt, bias, drift );
     } else {
-    return wiener_lpdf( abs(Y) | boundary, corrected_ndt, 1-bias, -drift );
+    return wiener_lpdf( abs(Y) | boundary, ndt, 1-bias, -drift );
     }
    }
 }
@@ -35,9 +35,9 @@ parameters {
     /* main parameter*/
     real<lower=0.001, upper=6> delta;               // drift rate
     real<lower=0.001, upper=4> alpha;               // Boundary boundary
-    real<lower=0.001, upper=0.4> res;                // residual of Non-decision time
+    real<lower=0, upper=0.4> res;                // residual of Non-decision time
     real<lower=0.001, upper=0.4> n200sub;            // n200 mu parameter
-    real<lower=0.001, upper=3> lambda;              // coefficient parameter
+    real<lower=0, upper=4> lambda;              // coefficient parameter
 }
 transformed parameters {
    vector[N_obs + N_mis] n200lat = append_row(n200lat_obs, n200lat_mis);
@@ -49,8 +49,8 @@ model {
     /* main paameter*/
     delta ~ normal(2, 4) T[0.001, 6];
 
-    res ~ normal(0.2, 0.2) T[0.001, 0.4];          // parameters for Non-decision time
-    lambda ~ normal(0.5, 2) T[0.001, 3];
+    res ~ normal(0.2, 0.2) T[0, 0.4];          // parameters for Non-decision time
+    lambda ~ normal(1, 3) T[0, 4];
 
     n200sub ~ normal(0.15, 0.1) T[0.001, 0.4];
     alpha ~ normal(1, 2) T[0.001, 4];
