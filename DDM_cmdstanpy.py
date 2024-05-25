@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import json
+import matplotlib.pyplot as plt
+import arviz as az
 from cmdstanpy import CmdStanModel
 from scipy.stats import gaussian_kde, norm
 #cmdstanpy.install_cmdstan()
@@ -8,7 +10,7 @@ from scipy.stats import gaussian_kde, norm
 
 #%%
 participant_ID = 1
-working_dir = 'C:/Users/ausra/Desktop/internship/data_analysis'
+working_dir = 'D:/research/internship/data_analysis'
 modelling_data = pd.read_csv(f'{working_dir}/modelling_data_N200_{participant_ID}.csv')
 
 N_obs = (modelling_data['N200_yes_or_no'] == 1).sum()
@@ -111,10 +113,38 @@ savage_dickey_ratio = posterior_density_at_1 / prior_density_at_1
 
 print("Savage-Dickey Density Ratio:", savage_dickey_ratio)
 
+#%%
+# Generating trace plots
+# Convert CmdStanPy fit to an ArviZ InferenceData object
+total_data_points = my_data['N_obs'] + my_data['N_mis']  # Total count of data points
 
+coords = {
+    "data_id": np.arange(total_data_points),
+    "obs_id": np.arange(my_data["N_obs"])
+}
 
+dims = {
+    "y": ["data_id"],  # 'y' spans all combined data points
+    "n200lat_obs": ["obs_id"]  # Observed latency values only index observed data
+}
 
+inference_data = az.from_cmdstanpy(
+    posterior=fit,
+    observed_data={
+        "y": my_data["y"],
+        "n200lat_obs": my_data["n200lat_obs"]
+    },
+    log_likelihood="log_lik",
+    coords=coords,
+    dims=dims
+)
 
+# Generate trace plots
+az.plot_trace(inference_data, var_names=['lambda'])
+plt.show()
 
-
+#%%
+# Generating autocorrelation plots
+autocorr = az.plot_autocorr(inference_data, var_names=['lambda'])
+plt.show()
 
