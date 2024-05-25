@@ -122,22 +122,21 @@ samples_diagrelevant.pop('DDM_or_Lapse', None) #Remove variable DDMorLapse to ob
 diags = phju.diagnostic(samples_diagrelevant)
 
 #%%
-# Calculate the Savage-Dickey ratio for ndt_gamma at 1
+# Calculate the Savage-Dickey ratio for ndt_gamma
 post_ndt_gamma = samples['ndt_gamma'].flatten()
 gamma_kde = gaussian_kde(post_ndt_gamma)
 
-#%%
-for i in np.arange(0, 3, 0.1):
-    posterior_density_at = gamma_kde.evaluate(i)[0]
+estimate = 1
+posterior_density_at = gamma_kde.evaluate(estimate)[0]
 
-    # Evaluate the prior density
-    prior_density_at = norm.pdf(i, loc=i, scale=3)
-    # Calculate the Savage-Dickey Density Ratio
-    savage_dickey_ratio = posterior_density_at / prior_density_at
-    print(f"Savage-Dickey Density Ratio at {i}:", savage_dickey_ratio)
+# Evaluate the prior density
+prior_density_at = norm.pdf(estimate, loc=estimate, scale=3)
+# Calculate the Savage-Dickey Density Ratio
+savage_dickey_ratio = posterior_density_at / prior_density_at
+print(f"Savage-Dickey Density Ratio at {estimate}:", savage_dickey_ratio)
 
 #%%
-#Posterior distributions
+# Plot posterior distributions
 plt.figure()
 phju.jellyfish(samples['ndt_int'])
 plt.title('Posterior distributions of ndt_int')
